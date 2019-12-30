@@ -29,28 +29,48 @@ class BooksApp extends React.Component {
       none: {
         value: 'none',
         displayText: 'None',
+        hide: true,
       },
     },
   };
 
   componentDidMount() {
+    let allBooks = {};
     BooksAPI.getAll()
       .then((books) => {
         let shelves = books.reduce((acc, book) => {
+          // Add book to all books
+          allBooks[book.id] = book;
+
           if (!acc[book.shelf]) {
             acc[book.shelf] = [];
           }
-          acc[book.shelf].push(book);
+          acc[book.shelf].push(book.id);
           return acc;
         }, {});
 
         // append books to state
         this.setState((currentState) => ({
           shelves,
-          books,
+          books: allBooks,
         }));
 
         console.log(this.state);
+      })
+      .catch();
+  }
+
+  onShelfChange(event, bookId) {
+    const newShelf = event.target.value;
+    let bookToMove = { ...this.state.books[bookId] };
+
+    bookToMove.shelf = newShelf;
+
+    BooksAPI.update(bookToMove, newShelf)
+      .then((shelves) => {
+        this.setState(() => ({
+          shelves,
+        }));
       })
       .catch();
   }
@@ -90,28 +110,38 @@ class BooksApp extends React.Component {
             </div>
 
             <div className="list-books-content">
-              {this.state.shelves &&
-                Object.keys(this.state.shelves).map((shelf) => (
-                  <div>
+              {Object.keys(this.state.shelfTypes)
+                .filter((shelf) => !this.state.shelfTypes[shelf].hide)
+                .map((shelf) => (
+                  <div key={shelf}>
                     <div className="bookshelf">
                       <h2 className="bookshelf-title">
                         {this.state.shelfTypes[shelf].displayText}
                       </h2>
                       <div className="bookshelf-books">
                         <ol className="books-grid">
-                          {this.state.shelves[shelf].map((book) => (
-                            <li>
-                              <Book
-                                bookTitle={book.title}
-                                author={book.authors.join(', ')}
-                                status={book.shelf}
-                                statusOptions={Object.values(
-                                  this.state.shelfTypes
-                                )}
-                                imgUrl={book.imageLinks.thumbnail}
-                              ></Book>
-                            </li>
-                          ))}
+                          {this.state.shelves &&
+                            this.state.shelves[shelf] &&
+                            this.state.shelves[shelf].map((bookId) => (
+                              <li key={bookId}>
+                                <Book
+                                  bookId={bookId}
+                                  bookTitle={this.state.books[bookId].title}
+                                  author={this.state.books[bookId].authors.join(
+                                    ', '
+                                  )}
+                                  shelf={this.state.books[bookId].shelf}
+                                  shelfOptions={Object.values(
+                                    this.state.shelfTypes
+                                  )}
+                                  imgUrl={
+                                    this.state.books[bookId].imageLinks
+                                      .thumbnail
+                                  }
+                                  onChange={this.onShelfChange.bind(this)}
+                                ></Book>
+                              </li>
+                            ))}
                         </ol>
                       </div>
                     </div>

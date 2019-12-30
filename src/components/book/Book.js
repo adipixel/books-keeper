@@ -14,11 +14,15 @@ export function Book(props) {
           }}
         ></div>
         <div className="book-shelf-changer">
-          <select readOnly value={props.status}>
+          <select
+            readOnly
+            value={props.shelf}
+            onChange={(e) => props.onChange(e, props.bookId, props.shelf)}
+          >
             <option value="move" disabled>
               Move to...
             </option>
-            {props.statusOptions.map((option) => (
+            {props.shelfOptions.map((option) => (
               <option value={option.value} key={option.value}>
                 {option.displayText}
               </option>
