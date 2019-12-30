@@ -13,24 +13,24 @@ class BooksApp extends React.Component {
      * pages, as well as provide a good URL they can bookmark and share.
      */
     showSearchPage: false,
-    shelfTypes: [
-      {
+    shelfTypes: {
+      currentlyReading: {
         value: 'currentlyReading',
         displayText: 'Currently reading',
       },
-      {
+      wantToRead: {
         value: 'wantToRead',
         displayText: 'Want to read',
       },
-      {
+      read: {
         value: 'read',
         displayText: 'Read',
       },
-      {
+      none: {
         value: 'none',
         displayText: 'None',
       },
-    ],
+    },
   };
 
   componentDidMount() {
@@ -94,7 +94,9 @@ class BooksApp extends React.Component {
                 Object.keys(this.state.shelves).map((shelf) => (
                   <div>
                     <div className="bookshelf">
-                      <h2 className="bookshelf-title">{shelf}</h2>
+                      <h2 className="bookshelf-title">
+                        {this.state.shelfTypes[shelf].displayText}
+                      </h2>
                       <div className="bookshelf-books">
                         <ol className="books-grid">
                           {this.state.shelves[shelf].map((book) => (
@@ -103,7 +105,9 @@ class BooksApp extends React.Component {
                                 bookTitle={book.title}
                                 author={book.authors.join(', ')}
                                 status={book.shelf}
-                                statusOptions={this.state.shelfTypes}
+                                statusOptions={Object.values(
+                                  this.state.shelfTypes
+                                )}
                                 imgUrl={book.imageLinks.thumbnail}
                               ></Book>
                             </li>
