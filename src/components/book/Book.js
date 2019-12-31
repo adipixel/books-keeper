@@ -17,7 +17,7 @@ export function Book(props) {
           <select
             readOnly
             value={props.shelf}
-            onChange={(e) => props.onChange(e, props.bookId, props.shelf)}
+            onChange={(e) => props.onChange(e, props.bookId, props.context)}
           >
             <option value="move" disabled>
               Move to...
