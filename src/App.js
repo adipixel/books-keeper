@@ -2,8 +2,9 @@ import React from 'react';
 import * as BooksAPI from './BooksAPI';
 import './App.css';
 
-import { Book } from './components/book/Book';
-import { Link, Route, withRouter } from 'react-router-dom';
+import { Route, withRouter } from 'react-router-dom';
+import { HomePage } from './components/home-page/HomePage';
+import { SearchPage } from './components/search-page/SearchPage';
 
 class BooksApp extends React.Component {
   state = {
@@ -91,7 +92,7 @@ class BooksApp extends React.Component {
   }
 
   searchBooks(event) {
-    const searchString = event.target.value;
+    const searchString = event.target.value.trim();
     if (!searchString) {
       this.setState(() => ({
         searchedBooks: [],
@@ -99,118 +100,43 @@ class BooksApp extends React.Component {
       return;
     }
 
-    if (this.interval) {
-      clearInterval(this.interval);
-    }
-    this.interval = setTimeout(() => {
-      BooksAPI.search(searchString).then((response) => {
-        if (response.error) {
-          return;
+    BooksAPI.search(searchString).then((response) => {
+      if (response.error) {
+        return;
+      }
+
+      let searchedBooks = response.map((book) => {
+        if (this.state.books[book.id]) {
+          book.shelf = this.state.books[book.id].shelf;
         }
-
-        let searchedBooks = response.map((book) => {
-          if (this.state.books[book.id]) {
-            book.shelf = this.state.books[book.id].shelf;
-          }
-          return book;
-        });
-
-        this.setState(() => ({
-          searchedBooks,
-        }));
+        return book;
       });
-    }, 400);
+
+      this.setState(() => ({
+        searchedBooks,
+      }));
+    });
   }
 
   render() {
     return (
       <div className="app">
         <Route exact path="/search">
-          <div className="search-books">
-            <div className="search-books-bar">
-              <Link to="/" className="close-search"></Link>
-              <div className="search-books-input-wrapper">
-                <input
-                  type="text"
-                  placeholder="Search by title or author"
-                  onInput={this.searchBooks.bind(this)}
-                />
-              </div>
-            </div>
-            <div className="search-books-results">
-              <ol className="books-grid">
-                {Array.isArray(this.state.searchedBooks) &&
-                  this.state.searchedBooks.map((book) => (
-                    <li key={book.id}>
-                      <Book
-                        bookId={book.id}
-                        bookTitle={book.title}
-                        author={book.authors && book.authors.join(', ')}
-                        shelf={book.shelf || 'none'}
-                        shelfOptions={Object.values(this.state.shelfTypes)}
-                        imgUrl={
-                          book.imageLinks ? book.imageLinks.thumbnail : ''
-                        }
-                        onChange={this.onShelfChange.bind(this)}
-                        context="search"
-                      ></Book>
-                    </li>
-                  ))}
-              </ol>
-            </div>
-          </div>
+          <SearchPage
+            searchedBooks={this.state.searchedBooks}
+            shelfTypes={this.state.shelfTypes}
+            onShelfChange={this.onShelfChange.bind(this)}
+            searchBooks={this.searchBooks.bind(this)}
+          ></SearchPage>
         </Route>
 
         <Route exact path="/">
-          <div className="list-books">
-            <div className="list-books-title">
-              <h1>MyReads</h1>
-            </div>
-
-            <div className="list-books-content">
-              {Object.keys(this.state.shelfTypes)
-                .filter((shelf) => !this.state.shelfTypes[shelf].hide)
-                .map((shelf) => (
-                  <div key={shelf}>
-                    <div className="bookshelf">
-                      <h2 className="bookshelf-title">
-                        {this.state.shelfTypes[shelf].displayText}
-                      </h2>
-                      <div className="bookshelf-books">
-                        <ol className="books-grid">
-                          {this.state.shelves &&
-                            this.state.shelves[shelf] &&
-                            this.state.shelves[shelf].map((bookId) => (
-                              <li key={bookId}>
-                                <Book
-                                  bookId={bookId}
-                                  bookTitle={this.state.books[bookId].title}
-                                  author={this.state.books[bookId].authors.join(
-                                    ', '
-                                  )}
-                                  shelf={this.state.books[bookId].shelf}
-                                  shelfOptions={Object.values(
-                                    this.state.shelfTypes
-                                  )}
-                                  imgUrl={
-                                    this.state.books[bookId].imageLinks
-                                      .thumbnail
-                                  }
-                                  onChange={this.onShelfChange.bind(this)}
-                                ></Book>
-                              </li>
-                            ))}
-                        </ol>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-
-            <Link to="/search" className="open-search">
-              Search books
-            </Link>
-          </div>
+          <HomePage
+            shelfTypes={this.state.shelfTypes}
+            shelves={this.state.shelves}
+            books={this.state.books}
+            onShelfChange={this.onShelfChange.bind(this)}
+          ></HomePage>
         </Route>
       </div>
     );
